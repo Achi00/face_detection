@@ -14,6 +14,24 @@ flask_app = Flask(__name__)
 face_analysis_app = FaceAnalysis(name='buffalo_l')
 face_analysis_app.prepare(ctx_id=0, det_size=(640, 640))
 
+# check if face exists on users image
+@flask_app.route('/detect-face', methods=['POST'])
+def detect_face():
+    try:
+        file = request.files['image'].read()
+        npimg = np.frombuffer(file, np.uint8)
+        img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+
+        # Use InsightFace for face detection
+        face_app = insightface.app.FaceAnalysis()
+        face_app.prepare(ctx_id=0, det_size=(640, 640))
+        faces = face_app.get(img)
+
+        return jsonify({"faces_detected": len(faces) > 0})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# for face swapping
 @flask_app.route('/swap-face', methods=['POST'])
 def swap_face():
     try:
